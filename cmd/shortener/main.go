@@ -20,7 +20,7 @@ func contains(s []string, e string) bool {
 	return false
 }
 
-func getShortenUrl(s []string, e string) string {
+func getShortenURL(s []string, e string) string {
 	for i, a := range s {
 		if a == e {
 			return fmt.Sprintf("%d", i)
@@ -29,13 +29,14 @@ func getShortenUrl(s []string, e string) string {
 	return ""
 }
 
-func HandleUrlRequest(w http.ResponseWriter, r *http.Request) {
+func HandleURLRequest(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		id := string(r.URL.Path)[1:]
 		if handeledURL[id] != "" {
 			w.Header().Add("Content-Type", "application/json")
 			w.Header().Set("Location", handeledURL[id])
+			w.WriteHeader(http.StatusTemporaryRedirect)
 
 		} else {
 			http.Error(w, "No such id", http.StatusBadRequest)
@@ -49,11 +50,11 @@ func HandleUrlRequest(w http.ResponseWriter, r *http.Request) {
 		url := string(body)
 		if !contains(urls, url) {
 			urls = append(urls, url)
-			handeledURL[getShortenUrl(urls, url)] = url
+			handeledURL[getShortenURL(urls, url)] = url
 		}
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(getShortenUrl(urls, url)))
+		w.Write([]byte(getShortenURL(urls, url)))
 	default:
 		fmt.Fprintf(w, "Sorry, only GET and POST methods are supported.")
 	}
@@ -61,7 +62,7 @@ func HandleUrlRequest(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	// маршрутизация запросов обработчику
-	http.HandleFunc("/", HandleUrlRequest)
+	http.HandleFunc("/", HandleURLRequest)
 
 	// запуск сервера с адресом localhost, порт 8080
 	log.Fatal(http.ListenAndServe(":8080", nil))
