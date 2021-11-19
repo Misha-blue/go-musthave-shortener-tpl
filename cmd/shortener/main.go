@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 )
 
 var urls = []string{}
@@ -32,10 +33,10 @@ func getShortenURL(s []string, e string) string {
 func HandleURLRequest(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		id := string(r.URL.Path)[1:]
-		if handeledURL[id] != "" {
+		id := strings.Split(r.URL.Path, "/")
+		if handeledURL[id[len(id)-1]] != "" {
 			w.Header().Add("Content-Type", "application/json")
-			w.Header().Set("Location", handeledURL[id])
+			w.Header().Set("Location", handeledURL[id[len(id)-1]])
 			w.WriteHeader(http.StatusTemporaryRedirect)
 
 		} else {
