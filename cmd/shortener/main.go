@@ -33,16 +33,18 @@ func getShortenURL(s []string, e string) string {
 func HandleURLRequest(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		id := strings.Split(r.URL.Path, "/")
-		if handeledURL[id[len(id)-1]] != "" {
+		ids := strings.Split(r.URL.Path, "/")
+		id := ids[len(ids)-1]
+		if handeledURL[id] != "" {
 			w.Header().Add("Content-Type", "application/json")
-			w.Header().Set("Location", handeledURL[id[len(id)-1]])
+			w.Header().Set("Location", handeledURL[id])
 			w.WriteHeader(http.StatusTemporaryRedirect)
-
+			w.Write([]byte(handeledURL[id]))
 		} else {
 			http.Error(w, "No such id", http.StatusBadRequest)
 		}
 	case http.MethodPost:
+		defer r.Body.Close()
 		body, error := io.ReadAll(r.Body)
 		if error != nil {
 			http.Error(w, error.Error(), 400)
@@ -55,7 +57,7 @@ func HandleURLRequest(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(getShortenURL(urls, url)))
+		w.Write([]byte("http://localhost:8080/" + getShortenURL(urls, url)))
 	default:
 		fmt.Fprintf(w, "Sorry, only GET and POST methods are supported.")
 	}
