@@ -35,10 +35,10 @@ func HandleURLRequest(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		pathParts := strings.Split(r.URL.Path, "/")
-		shortId := pathParts[len(pathParts)-1]
-		if handeledURLs[shortId] != "" {
+		shortID := pathParts[len(pathParts)-1]
+		if handeledURLs[shortID] != "" {
 			w.Header().Add("Content-Type", "application/json")
-			w.Header().Set("Location", handeledURLs[shortId])
+			w.Header().Set("Location", handeledURLs[shortID])
 			w.WriteHeader(http.StatusTemporaryRedirect)
 		} else {
 			http.Error(w, "Invalid shortened url id.", http.StatusBadRequest)
@@ -53,14 +53,14 @@ func HandleURLRequest(w http.ResponseWriter, r *http.Request) {
 		url := string(body)
 		w.Header().Add("Content-Type", "application/json")
 		if !contains(handeledURLs, url) {
-			shortId := getShortenURL(handeledURLs, url)
-			handeledURLs[shortId] = url
+			shortID := getShortenURL(handeledURLs, url)
+			handeledURLs[shortID] = url
 			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte("http://localhost:8080/" + shortId))
+			w.Write([]byte("http://localhost:8080/" + shortID))
 		} else {
-			shortId := findShornedURL(handeledURLs, url)
+			shortID := findShornedURL(handeledURLs, url)
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("http://localhost:8080/" + shortId))
+			w.Write([]byte("http://localhost:8080/" + shortID))
 		}
 	default:
 		http.Error(w, "Unsupported method "+r.Method, http.StatusBadRequest)
