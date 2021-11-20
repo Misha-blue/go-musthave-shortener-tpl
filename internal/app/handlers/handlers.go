@@ -40,7 +40,6 @@ func HandleURLRequest(w http.ResponseWriter, r *http.Request) {
 			w.Header().Add("Content-Type", "application/json")
 			w.Header().Set("Location", handeledURLs[shortId])
 			w.WriteHeader(http.StatusTemporaryRedirect)
-			w.Write([]byte(handeledURLs[shortId]))
 		} else {
 			http.Error(w, "Invalid shortened url id.", http.StatusBadRequest)
 		}
