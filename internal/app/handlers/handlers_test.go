@@ -15,7 +15,7 @@ func TestHandleURLRequest_post(t *testing.T) {
 	type want struct {
 		contentType  string
 		statusCode   int
-		shortenedUrl string
+		shortenedURL string
 	}
 	tests := []struct {
 		name string
@@ -28,7 +28,7 @@ func TestHandleURLRequest_post(t *testing.T) {
 			want: want{
 				contentType:  "application/json",
 				statusCode:   http.StatusCreated,
-				shortenedUrl: "http://localhost:8080/1",
+				shortenedURL: "http://localhost:8080/1",
 			},
 		},
 		{
@@ -37,7 +37,7 @@ func TestHandleURLRequest_post(t *testing.T) {
 			want: want{
 				contentType:  "application/json",
 				statusCode:   http.StatusOK,
-				shortenedUrl: "http://localhost:8080/0",
+				shortenedURL: "http://localhost:8080/0",
 			},
 		},
 	}
@@ -63,7 +63,7 @@ func TestHandleURLRequest_post(t *testing.T) {
 			err = result.Body.Close()
 			require.NoError(t, err)
 
-			assert.Equal(t, tt.want.shortenedUrl, string(resultBody))
+			assert.Equal(t, tt.want.shortenedURL, string(resultBody))
 		})
 	}
 }
