@@ -92,7 +92,7 @@ func TestHandleURLRequest_get(t *testing.T) {
 		},
 		{
 			name: "not existing Url",
-			url:  "1",
+			url:  "1000",
 			want: want{
 				contentType: "text/plain; charset=utf-8",
 				statusCode:  http.StatusBadRequest,
