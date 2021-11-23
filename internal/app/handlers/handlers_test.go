@@ -53,11 +53,12 @@ func TestHandleURLPostRequest(t *testing.T) {
 	postResp, postBody := testRequest(t, ts, http.MethodPost, "/", bytes.NewReader([]byte("existingUrl")))
 	assert.Equal(t, http.StatusCreated, postResp.StatusCode)
 	assert.Equal(t, "http://localhost:8080/0", postBody)
+	defer postResp.Body.Close()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			resp, body := testRequest(t, ts, http.MethodPost, "/", bytes.NewReader([]byte(tt.url)))
-
+			defer resp.Body.Close()
 			assert.Equal(t, tt.want.statusCode, resp.StatusCode)
 			assert.Equal(t, tt.want.contentType, resp.Header.Get("Content-Type"))
 			assert.Equal(t, tt.want.shortenedURL, body)
@@ -105,10 +106,12 @@ func TestHandleURLGetRequest(t *testing.T) {
 	postResp, postBody := testRequest(t, ts, http.MethodPost, "/", bytes.NewReader([]byte("anotherExistingUrl")))
 	assert.Equal(t, http.StatusCreated, postResp.StatusCode)
 	assert.Equal(t, "http://localhost:8080/2", postBody)
+	defer postResp.Body.Close()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			resp, body := testRequest(t, ts, http.MethodGet, "/"+tt.urlID, nil)
+			defer resp.Body.Close()
 
 			assert.Equal(t, tt.want.statusCode, resp.StatusCode)
 			assert.Equal(t, tt.want.contentType, resp.Header.Get("Content-Type"))
@@ -165,6 +168,7 @@ func TestHandleURLOtherMethodsRequest(t *testing.T) {
 		}
 		t.Run(tt.name, func(t *testing.T) {
 			resp, _ := testRequest(t, ts, tt.method, "/", nil)
+			defer resp.Body.Close()
 			assert.Equal(t, want.statusCode, resp.StatusCode)
 		})
 	}
