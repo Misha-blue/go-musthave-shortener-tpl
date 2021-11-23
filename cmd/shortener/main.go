@@ -5,9 +5,14 @@ import (
 	"net/http"
 
 	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/handlers"
+	"github.com/go-chi/chi"
 )
 
 func main() {
-	http.HandleFunc("/", handlers.HandleURLRequest)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	r := chi.NewRouter()
+
+	r.Get("/{urlID}", handlers.HandleURLGetRequest)
+	r.Post("/", handlers.HandleURLPostRequest)
+
+	log.Fatal(http.ListenAndServe(":8080", r))
 }

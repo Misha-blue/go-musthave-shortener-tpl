@@ -2,16 +2,19 @@ package handlers
 
 import (
 	"bytes"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestHandleURLRequest_post(t *testing.T) {
+func TestHandleURLPostRequest(t *testing.T) {
 	type want struct {
 		contentType  string
 		statusCode   int
@@ -41,34 +44,28 @@ func TestHandleURLRequest_post(t *testing.T) {
 			},
 		},
 	}
+	r := NewRouter()
+	r.Post("/", HandleURLPostRequest)
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	postResp, postBody := testRequest(t, ts, http.MethodPost, "/", bytes.NewReader([]byte("existingUrl")))
+	assert.Equal(t, http.StatusCreated, postResp.StatusCode)
+	assert.Equal(t, "http://localhost:8080/0", postBody)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r1 := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte("existingUrl")))
-			w1 := httptest.NewRecorder()
-			h1 := http.HandlerFunc(HandleURLRequest)
-			h1.ServeHTTP(w1, r1)
+			resp, body := testRequest(t, ts, http.MethodPost, "/", bytes.NewReader([]byte(tt.url)))
 
-			body := bytes.NewReader([]byte(tt.url))
-			request := httptest.NewRequest(http.MethodPost, "/", body)
-			w := httptest.NewRecorder()
-			h := http.HandlerFunc(HandleURLRequest)
-			h.ServeHTTP(w, request)
-			result := w.Result()
-
-			assert.Equal(t, tt.want.statusCode, result.StatusCode)
-			assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
-
-			resultBody, err := ioutil.ReadAll(result.Body)
-			require.NoError(t, err)
-			err = result.Body.Close()
-			require.NoError(t, err)
-
-			assert.Equal(t, tt.want.shortenedURL, string(resultBody))
+			assert.Equal(t, tt.want.statusCode, resp.StatusCode)
+			assert.Equal(t, tt.want.contentType, resp.Header.Get("Content-Type"))
+			assert.Equal(t, tt.want.shortenedURL, body)
 		})
 	}
 }
 
-func TestHandleURLRequest_get(t *testing.T) {
+func TestHandleURLGetRequest(t *testing.T) {
 	type want struct {
 		contentType string
 		statusCode  int
@@ -76,23 +73,13 @@ func TestHandleURLRequest_get(t *testing.T) {
 		body        string
 	}
 	tests := []struct {
-		name string
-		url  string
-		want want
+		name  string
+		urlID string
+		want  want
 	}{
 		{
-			name: "existing Url",
-			url:  "0",
-			want: want{
-				contentType: "application/json",
-				statusCode:  http.StatusTemporaryRedirect,
-				location:    "existingUrl",
-				body:        "",
-			},
-		},
-		{
-			name: "not existing Url",
-			url:  "1000",
+			name:  "not existing Url",
+			urlID: "1000",
 			want: want{
 				contentType: "text/plain; charset=utf-8",
 				statusCode:  http.StatusBadRequest,
@@ -100,38 +87,40 @@ func TestHandleURLRequest_get(t *testing.T) {
 				body:        "Invalid shortened url id.\n",
 			},
 		},
+		{
+			name:  "existing Url",
+			urlID: "2",
+			want: want{
+				contentType: "application/json",
+				statusCode:  http.StatusTemporaryRedirect,
+				location:    "anotherExistingUrl",
+				body:        "",
+			},
+		},
 	}
+	r := NewRouter()
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	postResp, postBody := testRequest(t, ts, http.MethodPost, "/", bytes.NewReader([]byte("anotherExistingUrl")))
+	assert.Equal(t, http.StatusCreated, postResp.StatusCode)
+	assert.Equal(t, "http://localhost:8080/2", postBody)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r1 := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte("existingUrl")))
-			w1 := httptest.NewRecorder()
-			h1 := http.HandlerFunc(HandleURLRequest)
-			h1.ServeHTTP(w1, r1)
+			resp, body := testRequest(t, ts, http.MethodGet, "/"+tt.urlID, nil)
 
-			request := httptest.NewRequest(http.MethodGet, "/"+tt.url, nil)
-			w := httptest.NewRecorder()
-			h := http.HandlerFunc(HandleURLRequest)
-			h.ServeHTTP(w, request)
-			result := w.Result()
-
-			assert.Equal(t, tt.want.statusCode, result.StatusCode)
-			assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
-			assert.Equal(t, tt.want.location, result.Header.Get("Location"))
-			resultBody, err := ioutil.ReadAll(result.Body)
-			require.NoError(t, err)
-			err = result.Body.Close()
-			require.NoError(t, err)
-
-			assert.Equal(t, tt.want.body, string(resultBody))
+			assert.Equal(t, tt.want.statusCode, resp.StatusCode)
+			assert.Equal(t, tt.want.contentType, resp.Header.Get("Content-Type"))
+			assert.Equal(t, tt.want.location, resp.Header.Get("Location"))
+			assert.Equal(t, tt.want.body, body)
 		})
 	}
 }
 
-func TestHandleURLRequest_othermethods(t *testing.T) {
+func TestHandleURLOtherMethodsRequest(t *testing.T) {
 	type want struct {
-		contentType string
-		statusCode  int
-		body        string
+		statusCode int
 	}
 	tests := []struct {
 		name   string
@@ -166,27 +155,46 @@ func TestHandleURLRequest_othermethods(t *testing.T) {
 			method: http.MethodConnect,
 		},
 	}
+	r := NewRouter()
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
 	for _, tt := range tests {
 		want := want{
-			contentType: "text/plain; charset=utf-8",
-			statusCode:  http.StatusBadRequest,
-			body:        "Unsupported method",
+			statusCode: http.StatusMethodNotAllowed,
 		}
 		t.Run(tt.name, func(t *testing.T) {
-			request := httptest.NewRequest(tt.method, "/", nil)
-			w := httptest.NewRecorder()
-			h := http.HandlerFunc(HandleURLRequest)
-			h.ServeHTTP(w, request)
-			result := w.Result()
-
-			assert.Equal(t, want.statusCode, result.StatusCode)
-			assert.Equal(t, want.contentType, result.Header.Get("Content-Type"))
-			resultBody, err := ioutil.ReadAll(result.Body)
-			require.NoError(t, err)
-			err = result.Body.Close()
-			require.NoError(t, err)
-
-			assert.Contains(t, string(resultBody), want.body)
+			resp, _ := testRequest(t, ts, tt.method, "/", nil)
+			assert.Equal(t, want.statusCode, resp.StatusCode)
 		})
 	}
+}
+
+func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (*http.Response, string) {
+	req, err := http.NewRequest(method, ts.URL+path, body)
+	require.NoError(t, err)
+
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}}
+
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	defer resp.Body.Close()
+
+	return resp, string(respBody)
+}
+
+func NewRouter() chi.Router {
+	fmt.Print("test")
+	r := chi.NewRouter()
+
+	r.Get("/{urlID}", HandleURLGetRequest)
+	r.Post("/", HandleURLPostRequest)
+	return r
 }
