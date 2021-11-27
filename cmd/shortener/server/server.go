@@ -29,7 +29,10 @@ func (s *Server) Run(ctx context.Context) error {
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		server.ListenAndServe()
+		err := server.ListenAndServe()
+		if err != nil {
+			return 
+		}
 	}()
 
 	log.Print("Server started")

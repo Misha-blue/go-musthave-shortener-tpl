@@ -17,7 +17,7 @@ type Repositorer interface {
 func Store(url string) (string, error) {
 	err := error(nil)
 
-	shortURL := findShornedURL(storage, url)
+	shortURL := findShortURL(storage, url)
 
 	if shortURL == "" {
 		shortURL = generateShortenURL(storage)
@@ -39,7 +39,7 @@ func Load(shortURL string) (string, error) {
 	return url, err
 }
 
-func findShornedURL(storage Storage, url string) string {
+func findShortURL(storage Storage, url string) string {
 	for key, value := range storage {
 		if value == url {
 			return key
