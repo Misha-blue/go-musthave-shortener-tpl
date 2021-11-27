@@ -18,7 +18,6 @@ func HandleURLPostRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	shortURL, err := repository.Store(string(body))
-
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
