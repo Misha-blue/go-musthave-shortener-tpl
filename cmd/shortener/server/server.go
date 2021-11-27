@@ -32,10 +32,10 @@ func (s *Server) Run(ctx context.Context) error {
 		server.ListenAndServe()
 	}()
 
-	log.Print("Server Started")
+	log.Print("Server started")
 
 	<-done
-	log.Print("Server Stopped")
+	log.Print("Server stopped")
 
 	return server.Shutdown(ctx)
 }
