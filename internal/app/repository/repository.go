@@ -20,7 +20,7 @@ func Store(url string) (string, error) {
 	shortURL := findShortURL(storage, url)
 
 	if shortURL == "" {
-		shortURL = generateShortenURL(storage)
+		shortURL = generateShortURL(storage)
 		storage[shortURL] = url
 	}
 
@@ -48,6 +48,6 @@ func findShortURL(storage Storage, url string) string {
 	return ""
 }
 
-func generateShortenURL(storage Storage) string {
+func generateShortURL(storage Storage) string {
 	return fmt.Sprintf("%d", len(storage))
 }
