@@ -39,7 +39,7 @@ func TestHandleURLPostRequest(t *testing.T) {
 			url:  "existingUrl",
 			want: want{
 				contentType:  "application/json",
-				statusCode:   http.StatusOK,
+				statusCode:   http.StatusCreated,
 				shortenedURL: "http://localhost:8080/0",
 			},
 		},
@@ -85,7 +85,7 @@ func TestHandleURLGetRequest(t *testing.T) {
 				contentType: "text/plain; charset=utf-8",
 				statusCode:  http.StatusBadRequest,
 				location:    "",
-				body:        "Invalid shortened url id.\n",
+				body:        "record in storage for your shortUrl wasn't found\n",
 			},
 		},
 		{
@@ -198,7 +198,7 @@ func NewRouter() chi.Router {
 	fmt.Print("test")
 	r := chi.NewRouter()
 
-	r.Get("/{urlID}", HandleURLGetRequest)
+	r.Get("/{shortUrl}", HandleURLGetRequest)
 	r.Post("/", HandleURLPostRequest)
 	return r
 }
