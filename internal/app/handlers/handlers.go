@@ -10,6 +10,7 @@ import (
 
 func HandleURLPostRequest(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
+
 	body, e := io.ReadAll(r.Body)
 	if e != nil {
 		http.Error(w, e.Error(), http.StatusBadRequest)
