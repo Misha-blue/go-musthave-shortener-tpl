@@ -198,7 +198,7 @@ func NewRouter() chi.Router {
 	fmt.Print("test")
 	r := chi.NewRouter()
 
-	r.Get("/{shortUrl}", HandleURLGetRequest)
+	r.Get("/{shortURL}", HandleURLGetRequest)
 	r.Post("/", HandleURLPostRequest)
 	return r
 }

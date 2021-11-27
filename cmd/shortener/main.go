@@ -11,7 +11,7 @@ import (
 func main() {
 	r := chi.NewRouter()
 
-	r.Get("/{urlID}", handlers.HandleURLGetRequest)
+	r.Get("/{shortURL}", handlers.HandleURLGetRequest)
 	r.Post("/", handlers.HandleURLPostRequest)
 
 	log.Fatal(http.ListenAndServe(":8080", r))

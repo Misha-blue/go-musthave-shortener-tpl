@@ -29,8 +29,9 @@ func HandleURLPostRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleURLGetRequest(w http.ResponseWriter, r *http.Request) {
-	shortURL := chi.URLParam(r, "shortUrl")
+	shortURL := chi.URLParam(r, "shortURL")
 	url, err := repository.Load(shortURL)
+
 	if err == nil {
 		w.Header().Add("Content-Type", "application/json")
 		w.Header().Set("Location", url)

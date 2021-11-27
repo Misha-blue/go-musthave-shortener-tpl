@@ -11,7 +11,7 @@ var storage = Storage{}
 
 type Repositorer interface {
 	Store(url string) (string, error)
-	Load(shortUrl string) (string, error)
+	Load(shortURL string) (string, error)
 }
 
 func Store(url string) (string, error) {
@@ -27,21 +27,21 @@ func Store(url string) (string, error) {
 	return shortURL, err
 }
 
-func Load(shortUrl string) (string, error) {
+func Load(shortURL string) (string, error) {
 	err := error(nil)
 
-	url := storage[shortUrl]
+	url := storage[shortURL]
 
 	if url == "" {
 		err = errors.New("record in storage for your shortUrl wasn't found")
 	}
 
-	return storage[shortUrl], err
+	return url, err
 }
 
-func findShornedURL(storage Storage, element string) string {
+func findShornedURL(storage Storage, url string) string {
 	for key, value := range storage {
-		if value == element {
+		if value == url {
 			return key
 		}
 	}
