@@ -1,18 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
-	"net/http"
 
-	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/handlers"
-	"github.com/go-chi/chi"
+	"github.com/Misha-blue/go-musthave-shortener-tpl/cmd/shortener/server"
 )
 
 func main() {
-	r := chi.NewRouter()
-
-	r.Get("/{shortURL}", handlers.HandleURLGetRequest)
-	r.Post("/", handlers.HandleURLPostRequest)
-
-	log.Fatal(http.ListenAndServe(":8080", r))
+	server := &server.Server{}
+	log.Fatal(server.Run(context.Background()))
 }
