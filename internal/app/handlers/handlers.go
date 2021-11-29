@@ -5,10 +5,19 @@ import (
 	"net/http"
 
 	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/repository"
+
 	"github.com/go-chi/chi"
 )
 
-func HandleURLPostRequest(w http.ResponseWriter, r *http.Request) {
+type Handler struct {
+	repository repository.Repositorier
+}
+
+func New(repository repository.Repositorier) *Handler {
+	return &Handler{repository: repository}
+}
+
+func (handler *Handler) HandleURLPostRequest(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	body, e := io.ReadAll(r.Body)
@@ -17,7 +26,7 @@ func HandleURLPostRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortURL, err := repository.Store(string(body))
+	shortURL, err := handler.repository.Store(string(body))
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -29,9 +38,9 @@ func HandleURLPostRequest(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("http://localhost:8080/" + shortURL))
 }
 
-func HandleURLGetRequest(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) HandleURLGetRequest(w http.ResponseWriter, r *http.Request) {
 	shortURL := chi.URLParam(r, "shortURL")
-	url, err := repository.Load(shortURL)
+	url, err := handler.repository.Load(shortURL)
 
 	if err == nil {
 		w.Header().Add("Content-Type", "application/json")

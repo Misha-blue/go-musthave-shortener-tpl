@@ -8,6 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/repository"
+
 	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/handlers"
 	"github.com/go-chi/chi"
 )
@@ -15,14 +17,15 @@ import (
 type Server struct{}
 
 func (s *Server) Run(ctx context.Context) error {
-	handler := chi.NewRouter()
+	router := chi.NewRouter()
+	handler := handlers.New(repository.New())
 
-	handler.Get("/{shortURL}", handlers.HandleURLGetRequest)
-	handler.Post("/", handlers.HandleURLPostRequest)
+	router.Get("/{shortURL}", handler.HandleURLGetRequest)
+	router.Post("/", handler.HandleURLPostRequest)
 
 	server := http.Server{
 		Addr:    ":8080",
-		Handler: handler,
+		Handler: router,
 	}
 
 	done := make(chan os.Signal, 1)
@@ -31,7 +34,7 @@ func (s *Server) Run(ctx context.Context) error {
 	go func() {
 		err := server.ListenAndServe()
 		if err != nil {
-			return 
+			return
 		}
 	}()
 

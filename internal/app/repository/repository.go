@@ -5,32 +5,34 @@ import (
 	"fmt"
 )
 
-type Storage map[string]string
-
-var storage = Storage{}
+type Repositorier map[string]string
 
 type Repositorer interface {
 	Store(url string) (string, error)
 	Load(shortURL string) (string, error)
 }
 
-func Store(url string) (string, error) {
+func New() Repositorier {
+	return Repositorier{}
+}
+
+func (repo Repositorier) Store(url string) (string, error) {
 	err := error(nil)
 
-	shortURL := findShortURL(storage, url)
+	shortURL := findShortURL(repo, url)
 
 	if shortURL == "" {
-		shortURL = generateShortURL(storage)
-		storage[shortURL] = url
+		shortURL = generateShortURL(repo)
+		repo[shortURL] = url
 	}
 
 	return shortURL, err
 }
 
-func Load(shortURL string) (string, error) {
+func (repo Repositorier) Load(shortURL string) (string, error) {
 	err := error(nil)
 
-	url := storage[shortURL]
+	url := repo[shortURL]
 
 	if url == "" {
 		err = errors.New("record in storage for your shortUrl wasn't found")
@@ -39,8 +41,8 @@ func Load(shortURL string) (string, error) {
 	return url, err
 }
 
-func findShortURL(storage Storage, url string) string {
-	for key, value := range storage {
+func findShortURL(repo Repositorier, url string) string {
+	for key, value := range repo {
 		if value == url {
 			return key
 		}
@@ -48,6 +50,6 @@ func findShortURL(storage Storage, url string) string {
 	return ""
 }
 
-func generateShortURL(storage Storage) string {
-	return fmt.Sprintf("%d", len(storage))
+func generateShortURL(repo Repositorier) string {
+	return fmt.Sprintf("%d", len(repo))
 }

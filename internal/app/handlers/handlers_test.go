@@ -9,6 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/repository"
+
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -45,7 +47,6 @@ func TestHandleURLPostRequest(t *testing.T) {
 		},
 	}
 	r := NewRouter()
-	r.Post("/", HandleURLPostRequest)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -90,7 +91,7 @@ func TestHandleURLGetRequest(t *testing.T) {
 		},
 		{
 			name:  "existing Url",
-			urlID: "2",
+			urlID: "0",
 			want: want{
 				contentType: "application/json",
 				statusCode:  http.StatusTemporaryRedirect,
@@ -105,7 +106,7 @@ func TestHandleURLGetRequest(t *testing.T) {
 
 	postResp, postBody := testRequest(t, ts, http.MethodPost, "/", bytes.NewReader([]byte("anotherExistingUrl")))
 	assert.Equal(t, http.StatusCreated, postResp.StatusCode)
-	assert.Equal(t, "http://localhost:8080/2", postBody)
+	assert.Equal(t, "http://localhost:8080/0", postBody)
 	defer postResp.Body.Close()
 
 	for _, tt := range tests {
@@ -198,7 +199,10 @@ func NewRouter() chi.Router {
 	fmt.Print("test")
 	r := chi.NewRouter()
 
-	r.Get("/{shortURL}", HandleURLGetRequest)
-	r.Post("/", HandleURLPostRequest)
+	repository := repository.New()
+	handler := New(repository)
+
+	r.Get("/{shortURL}", handler.HandleURLGetRequest)
+	r.Post("/", handler.HandleURLPostRequest)
 	return r
 }
