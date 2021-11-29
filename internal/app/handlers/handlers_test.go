@@ -199,8 +199,7 @@ func NewRouter() chi.Router {
 	fmt.Print("test")
 	r := chi.NewRouter()
 
-	repository := repository.New()
-	handler := New(repository)
+	handler := New(repository.New())
 
 	r.Get("/{shortURL}", handler.HandleURLGetRequest)
 	r.Post("/", handler.HandleURLPostRequest)

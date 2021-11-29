@@ -10,11 +10,11 @@ import (
 )
 
 type Handler struct {
-	repository repository.Repositorier
+	repositorier repository.Repositorier
 }
 
-func New(repository repository.Repositorier) *Handler {
-	return &Handler{repository: repository}
+func New(repositorier repository.Repositorier) *Handler {
+	return &Handler{repositorier: repositorier}
 }
 
 func (handler *Handler) HandleURLPostRequest(w http.ResponseWriter, r *http.Request) {
@@ -26,7 +26,7 @@ func (handler *Handler) HandleURLPostRequest(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	shortURL, err := handler.repository.Store(string(body))
+	shortURL, err := handler.repositorier.Store(string(body))
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -40,7 +40,7 @@ func (handler *Handler) HandleURLPostRequest(w http.ResponseWriter, r *http.Requ
 
 func (handler *Handler) HandleURLGetRequest(w http.ResponseWriter, r *http.Request) {
 	shortURL := chi.URLParam(r, "shortURL")
-	url, err := handler.repository.Load(shortURL)
+	url, err := handler.repositorier.Load(shortURL)
 
 	if err == nil {
 		w.Header().Add("Content-Type", "application/json")

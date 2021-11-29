@@ -4,9 +4,6 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/repository"
 
@@ -16,7 +13,7 @@ import (
 
 type Server struct{}
 
-func (s *Server) Run(ctx context.Context) error {
+func (s *Server) Run(ctx context.Context) (*http.Server, error) {
 	router := chi.NewRouter()
 	handler := handlers.New(repository.New())
 
@@ -28,20 +25,18 @@ func (s *Server) Run(ctx context.Context) error {
 		Handler: router,
 	}
 
-	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-
 	go func() {
-		err := server.ListenAndServe()
-		if err != nil {
-			return
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server didn't run: %s\n", err)
 		}
 	}()
 
-	log.Print("Server started")
+	return &server, nil
+}
 
-	<-done
-	log.Print("Server stopped")
-
-	return server.Shutdown(ctx)
+func (s *Server) Close(server *http.Server, ctx context.Context) {
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatalf("Server shutdown failed:%+v", err)
+	}
+	log.Print("Server exited properly")
 }
