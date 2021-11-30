@@ -21,6 +21,8 @@ func New(handler *handlers.Handler) *Server {
 }
 
 func (s *Server) Run(ctx context.Context) (err error) {
+	serverCtx, cancel := context.WithCancel(ctx)
+
 	router := chi.NewRouter()
 
 	router.Get("/{shortURL}", s.handler.HandleURLGetRequest)
@@ -33,21 +35,21 @@ func (s *Server) Run(ctx context.Context) (err error) {
 
 	go func() {
 		if err = server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("server didn't run:%+s\n", err)
+			log.Printf("server didn't run:%+s\n", err)
 		}
+		cancel()
 	}()
 
 	log.Printf("server started")
 
-	<-ctx.Done()
+	<-serverCtx.Done()
+	log.Printf("server shutdowning")
 
-	log.Printf("server stopped")
+	shutDownCtx, shutDownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutDownCancel()
 
-	ctxShutDown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err = server.Shutdown(ctxShutDown); err != nil {
-		log.Fatalf("server shutdown failed:%+s", err)
+	if err = server.Shutdown(shutDownCtx); err != nil {
+		log.Printf("server shutdown failed: %+s", err)
 	}
 
 	log.Printf("server exited properly")

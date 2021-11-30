@@ -10,11 +10,11 @@ import (
 )
 
 type Handler struct {
-	repositorier repository.Repositorier
+	repositorier *repository.Repositorier
 }
 
 func New(repositorier repository.Repositorier) *Handler {
-	return &Handler{repositorier: repositorier}
+	return &Handler{repositorier: &repositorier}
 }
 
 func (handler *Handler) HandleURLPostRequest(w http.ResponseWriter, r *http.Request) {

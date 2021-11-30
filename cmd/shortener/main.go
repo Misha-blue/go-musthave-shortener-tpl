@@ -23,8 +23,11 @@ func main() {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	oscall := <-done
-	log.Printf("system call:%+v", oscall)
+	go func() {
+		oscall := <-done
+		log.Printf("system call:%+v", oscall)
+		cancel()
+	}()
 
 	if err := server.Run(ctx); err != nil {
 		log.Printf("failed to run server:+%v\n", err)
