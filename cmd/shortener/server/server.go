@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/repository"
 
@@ -13,7 +14,7 @@ import (
 
 type Server struct{}
 
-func (s *Server) Run(ctx context.Context) (*http.Server, error) {
+func (s *Server) Run(ctx context.Context) (err error) {
 	router := chi.NewRouter()
 	handler := handlers.New(repository.New())
 
@@ -26,17 +27,29 @@ func (s *Server) Run(ctx context.Context) (*http.Server, error) {
 	}
 
 	go func() {
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server didn't run: %s\n", err)
+		if err = server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server didn't run:%+s\n", err)
 		}
 	}()
 
-	return &server, nil
-}
+	log.Printf("server started")
 
-func (s *Server) Close(server *http.Server, ctx context.Context) {
-	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalf("Server shutdown failed:%+v", err)
+	<-ctx.Done()
+
+	log.Printf("server stopped")
+
+	ctxShutDown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err = server.Shutdown(ctxShutDown); err != nil {
+		log.Fatalf("server shutdown failed:%+s", err)
 	}
-	log.Print("Server exited properly")
+
+	log.Printf("server exited properly")
+
+	if err == http.ErrServerClosed {
+		err = nil
+	}
+
+	return
 }
