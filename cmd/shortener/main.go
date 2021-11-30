@@ -14,7 +14,7 @@ import (
 
 func main() {
 	repository := repository.New()
-	handler := handlers.New(repository)
+	handler := handlers.New(&repository)
 	server := server.New(handler)
 
 	ctx, cancel := context.WithCancel(context.Background())

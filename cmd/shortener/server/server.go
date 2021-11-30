@@ -35,7 +35,7 @@ func (s *Server) Run(ctx context.Context) (err error) {
 
 	go func() {
 		if err = server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Printf("server didn't run:%+s\n", err)
+			log.Printf("server didn't start: %+s\n", err)
 		}
 		cancel()
 	}()
@@ -43,7 +43,7 @@ func (s *Server) Run(ctx context.Context) (err error) {
 	log.Printf("server started")
 
 	<-serverCtx.Done()
-	log.Printf("server shutdowning")
+	log.Printf("server stopping")
 
 	shutDownCtx, shutDownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutDownCancel()
@@ -52,7 +52,7 @@ func (s *Server) Run(ctx context.Context) (err error) {
 		log.Printf("server shutdown failed: %+s", err)
 	}
 
-	log.Printf("server exited properly")
+	log.Printf("server stopped properly")
 
 	if err == http.ErrServerClosed {
 		err = nil
