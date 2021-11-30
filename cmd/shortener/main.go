@@ -8,10 +8,15 @@ import (
 	"syscall"
 
 	"github.com/Misha-blue/go-musthave-shortener-tpl/cmd/shortener/server"
+	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/handlers"
+	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/repository"
 )
 
 func main() {
-	server := &server.Server{}
+	repository := repository.New()
+	handler := handlers.New(repository)
+	server := server.New(handler)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

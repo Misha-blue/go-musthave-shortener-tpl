@@ -6,20 +6,25 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/repository"
-
 	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/handlers"
 	"github.com/go-chi/chi"
 )
 
-type Server struct{}
+type Server struct {
+	handler *handlers.Handler
+}
+
+func New(handler *handlers.Handler) *Server {
+	return &Server{
+		handler: handler,
+	}
+}
 
 func (s *Server) Run(ctx context.Context) (err error) {
 	router := chi.NewRouter()
-	handler := handlers.New(repository.New())
 
-	router.Get("/{shortURL}", handler.HandleURLGetRequest)
-	router.Post("/", handler.HandleURLPostRequest)
+	router.Get("/{shortURL}", s.handler.HandleURLGetRequest)
+	router.Post("/", s.handler.HandleURLPostRequest)
 
 	server := http.Server{
 		Addr:    ":8080",
