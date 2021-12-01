@@ -15,11 +15,11 @@ type Handler struct {
 	repositorier *repository.Repositorier
 }
 
-type UrlPostRequest struct {
+type URLPostRequest struct {
 	URL string `json:"url"`
 }
 
-type UrlResponseRequest struct {
+type URLResponseRequest struct {
 	Result string `json:"result"`
 }
 
@@ -50,7 +50,7 @@ func (handler *Handler) HandleURLPostRequest(w http.ResponseWriter, r *http.Requ
 
 func (handler *Handler) HandleURLJsonPostRequest(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	request := UrlPostRequest{}
+	request := URLPostRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -63,7 +63,7 @@ func (handler *Handler) HandleURLJsonPostRequest(w http.ResponseWriter, r *http.
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	response := UrlResponseRequest{"http://localhost:8080/" + shortURL}
+	response := URLResponseRequest{"http://localhost:8080/" + shortURL}
 
 	buf := bytes.NewBuffer([]byte{})
 	encoder := json.NewEncoder(buf)

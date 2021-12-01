@@ -70,7 +70,7 @@ func TestHandleURLPostRequest(t *testing.T) {
 
 func TestHandleURLJsonPostRequest(t *testing.T) {
 	type Request struct {
-		Url string `json:"url"`
+		URL string `json:"url"`
 	}
 	type Response struct {
 		Result string `json:"result"`
