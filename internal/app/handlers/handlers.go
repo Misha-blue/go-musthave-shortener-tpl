@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/json"
 	"io"
 	"net/http"
 
@@ -11,6 +13,14 @@ import (
 
 type Handler struct {
 	repositorier *repository.Repositorier
+}
+
+type UrlPostRequest struct {
+	URL string `json:"url"`
+}
+
+type UrlResponseRequest struct {
+	Result string `json:"result"`
 }
 
 func New(repositorier *repository.Repositorier) *Handler {
@@ -36,6 +46,33 @@ func (handler *Handler) HandleURLPostRequest(w http.ResponseWriter, r *http.Requ
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte("http://localhost:8080/" + shortURL))
+}
+
+func (handler *Handler) HandleURLJsonPostRequest(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	request := UrlPostRequest{}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	shortURL, err := handler.repositorier.Store(request.URL)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	response := UrlResponseRequest{"http://localhost:8080/" + shortURL}
+
+	buf := bytes.NewBuffer([]byte{})
+	encoder := json.NewEncoder(buf)
+	encoder.SetEscapeHTML(false)
+	encoder.Encode(response)
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(buf.Bytes())
 }
 
 func (handler *Handler) HandleURLGetRequest(w http.ResponseWriter, r *http.Request) {
