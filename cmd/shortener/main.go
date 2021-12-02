@@ -19,10 +19,7 @@ type Config struct {
 }
 
 func main() {
-	cfg, err := SetupConfig()
-	if err != nil {
-		log.Print(err)
-	}
+	cfg := SetupConfig()
 
 	repository := repository.New()
 	handler := handlers.New(&repository, cfg.BaseURL)
@@ -45,8 +42,21 @@ func main() {
 	}
 }
 
-func SetupConfig() (Config, error) {
+func SetupConfig() Config {
 	var cfg Config
 	err := env.Parse(&cfg)
-	return cfg, err
+
+	if err != nil {
+		log.Print(err)
+	}
+
+	if cfg.BaseURL == "" {
+		cfg.BaseURL = "http://localhost:8080"
+	}
+
+	if cfg.ServerAdress == "" {
+		cfg.ServerAdress = ":8080"
+	}
+
+	return cfg
 }
