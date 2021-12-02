@@ -13,6 +13,7 @@ import (
 
 type Handler struct {
 	repositorier *repository.Repositorier
+	baseURL      string
 }
 
 type URLPostRequest struct {
@@ -23,8 +24,8 @@ type URLResponseRequest struct {
 	Result string `json:"result"`
 }
 
-func New(repositorier *repository.Repositorier) *Handler {
-	return &Handler{repositorier: repositorier}
+func New(repositorier *repository.Repositorier, baseURL string) *Handler {
+	return &Handler{repositorier: repositorier, baseURL: baseURL}
 }
 
 func (handler *Handler) HandleURLPostRequest(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +46,7 @@ func (handler *Handler) HandleURLPostRequest(w http.ResponseWriter, r *http.Requ
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("http://localhost:8080/" + shortURL))
+	w.Write([]byte(handler.baseURL + "/" + shortURL))
 }
 
 func (handler *Handler) HandleURLJsonPostRequest(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +64,7 @@ func (handler *Handler) HandleURLJsonPostRequest(w http.ResponseWriter, r *http.
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	response := URLResponseRequest{"http://localhost:8080/" + shortURL}
+	response := URLResponseRequest{handler.baseURL + "/" + shortURL}
 
 	buf := bytes.NewBuffer([]byte{})
 	encoder := json.NewEncoder(buf)

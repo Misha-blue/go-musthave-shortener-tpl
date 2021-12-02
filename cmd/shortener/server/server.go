@@ -11,12 +11,14 @@ import (
 )
 
 type Server struct {
-	handler *handlers.Handler
+	handler       *handlers.Handler
+	serverAddress string
 }
 
-func New(handler *handlers.Handler) *Server {
+func New(handler *handlers.Handler, serverAddress string) *Server {
 	return &Server{
-		handler: handler,
+		handler:       handler,
+		serverAddress: serverAddress,
 	}
 }
 
@@ -30,7 +32,7 @@ func (s *Server) Run(ctx context.Context) (err error) {
 	router.Post("/api/shorten", s.handler.HandleURLJsonPostRequest)
 
 	server := http.Server{
-		Addr:    ":8080",
+		Addr:    s.serverAddress,
 		Handler: router,
 	}
 

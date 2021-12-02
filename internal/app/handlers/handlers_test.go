@@ -300,7 +300,7 @@ func NewRouter() chi.Router {
 	r := chi.NewRouter()
 
 	repository := repository.New()
-	handler := New(&repository)
+	handler := New(&repository, "http://localhost:8080")
 
 	r.Get("/{shortURL}", handler.HandleURLGetRequest)
 	r.Post("/", handler.HandleURLPostRequest)
