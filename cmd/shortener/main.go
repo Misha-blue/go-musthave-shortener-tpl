@@ -11,6 +11,7 @@ import (
 	"github.com/Misha-blue/go-musthave-shortener-tpl/cmd/shortener/settings"
 	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/handlers"
 	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/repository"
+	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/repository/file"
 )
 
 func main() {
@@ -20,7 +21,14 @@ func main() {
 	}
 
 	log.Print(cfg)
-	repository := repository.New()
+	storage, err := file.New(cfg.StoragePath + "/fileStorage.txt")
+
+	if err != nil {
+		log.Printf("Failed to create storage:+%v\n", err)
+	}
+	defer storage.Close()
+
+	repository := repository.New(storage)
 	handler := handlers.New(&repository, cfg.BaseURL)
 	server := server.New(handler, cfg.ServerAdress)
 
