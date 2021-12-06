@@ -3,36 +3,50 @@ package repository
 import (
 	"errors"
 	"fmt"
+
+	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/repository/file"
 )
 
-type Repositorier map[string]string
+type Repository struct {
+	storage *file.FileStorage
+}
 
 type Repositorer interface {
 	Store(url string) (string, error)
 	Load(shortURL string) (string, error)
 }
 
-func New() Repositorier {
-	return Repositorier{}
+func New(storage *file.FileStorage) Repository {
+	return Repository{storage: storage}
 }
 
-func (repo Repositorier) Store(url string) (string, error) {
+func (repo Repository) Store(url string) (string, error) {
 	err := error(nil)
 
-	shortURL := findShortURL(repo, url)
+	urls, e := repo.storage.GetAll()
+	if e != nil {
+		return "", e
+	}
+
+	shortURL := findShortURL(urls, url)
 
 	if shortURL == "" {
-		shortURL = generateShortURL(repo)
-		repo[shortURL] = url
+		shortURL = generateShortURL(urls)
+		_, err = repo.storage.Add(shortURL, url)
 	}
 
 	return shortURL, err
 }
 
-func (repo Repositorier) Load(shortURL string) (string, error) {
+func (repo Repository) Load(shortURL string) (string, error) {
 	err := error(nil)
 
-	url := repo[shortURL]
+	urls, e := repo.storage.GetAll()
+	if e != nil {
+		return "", e
+	}
+
+	url := urls[shortURL]
 
 	if url == "" {
 		err = errors.New("record in storage for your shortUrl wasn't found")
@@ -41,8 +55,8 @@ func (repo Repositorier) Load(shortURL string) (string, error) {
 	return url, err
 }
 
-func findShortURL(repo Repositorier, url string) string {
-	for key, value := range repo {
+func findShortURL(s map[string]string, url string) string {
+	for key, value := range s {
 		if value == url {
 			return key
 		}
@@ -50,6 +64,6 @@ func findShortURL(repo Repositorier, url string) string {
 	return ""
 }
 
-func generateShortURL(repo Repositorier) string {
-	return fmt.Sprintf("%d", len(repo))
+func generateShortURL(s map[string]string) string {
+	return fmt.Sprintf("%d", len(s))
 }

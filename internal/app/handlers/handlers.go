@@ -7,13 +7,12 @@ import (
 	"net/http"
 
 	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/repository"
-
 	"github.com/go-chi/chi"
 )
 
 type Handler struct {
-	repositorier *repository.Repositorier
-	baseURL      string
+	repository *repository.Repository
+	baseURL    string
 }
 
 type URLPostRequest struct {
@@ -24,8 +23,8 @@ type URLResponseRequest struct {
 	Result string `json:"result"`
 }
 
-func New(repositorier *repository.Repositorier, baseURL string) *Handler {
-	return &Handler{repositorier: repositorier, baseURL: baseURL}
+func New(repository *repository.Repository, baseURL string) *Handler {
+	return &Handler{repository: repository, baseURL: baseURL}
 }
 
 func (handler *Handler) HandleURLPostRequest(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +36,7 @@ func (handler *Handler) HandleURLPostRequest(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	shortURL, err := handler.repositorier.Store(string(body))
+	shortURL, err := handler.repository.Store(string(body))
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -58,7 +57,7 @@ func (handler *Handler) HandleURLJsonPostRequest(w http.ResponseWriter, r *http.
 		return
 	}
 
-	shortURL, err := handler.repositorier.Store(request.URL)
+	shortURL, err := handler.repository.Store(request.URL)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -78,7 +77,7 @@ func (handler *Handler) HandleURLJsonPostRequest(w http.ResponseWriter, r *http.
 
 func (handler *Handler) HandleURLGetRequest(w http.ResponseWriter, r *http.Request) {
 	shortURL := chi.URLParam(r, "shortURL")
-	url, err := handler.repositorier.Load(shortURL)
+	url, err := handler.repository.Load(shortURL)
 
 	if err == nil {
 		w.Header().Add("Content-Type", "application/json")
