@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/repository"
+	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/repository/file"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
@@ -299,7 +300,8 @@ func NewRouter() chi.Router {
 	fmt.Print("test")
 	r := chi.NewRouter()
 
-	repository := repository.New()
+	storage, _ := file.New("fileStorage.txt")
+	repository := repository.New(storage)
 	handler := New(&repository, "http://localhost:8080")
 
 	r.Get("/{shortURL}", handler.HandleURLGetRequest)
