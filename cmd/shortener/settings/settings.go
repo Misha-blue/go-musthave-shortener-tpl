@@ -9,7 +9,7 @@ import (
 type Config struct {
 	ServerAdress string `env:"SERVER_ADDRESS" envDefault:":8080"`
 	BaseURL      string `env:"BASE_URL" envDefault:"http://localhost:8080"`
-	StoragePath  string `env:"FILE_STORAGE_PATH"`
+	StoragePath  string `env:"FILE_STORAGE_PATH" envDefault:"storage"`
 }
 
 func SetupConfig() (*Config, error) {

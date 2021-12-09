@@ -20,7 +20,6 @@ func main() {
 		log.Printf("Failed to read environment settings:+%v\n", err)
 	}
 
-	log.Print(cfg)
 	storage, err := file.New(cfg.StoragePath)
 
 	if err != nil {

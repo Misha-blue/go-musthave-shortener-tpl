@@ -11,7 +11,7 @@ type FileStorage struct {
 }
 
 func New(filePath string) (*FileStorage, error) {
-	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_TRUNC, 0777)
+	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (s *FileStorage) GetAll() (map[string]string, error) {
 }
 
 func (s *FileStorage) Add(shortURL string, originURL string) (int, error) {
-	file, err := os.OpenFile(s.filePath, os.O_WRONLY|os.O_APPEND, 0777)
+	file, err := os.OpenFile(s.filePath, os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		return 0, err
 	}
