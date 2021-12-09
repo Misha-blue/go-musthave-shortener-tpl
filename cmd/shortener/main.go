@@ -21,12 +21,11 @@ func main() {
 	}
 
 	log.Print(cfg)
-	storage, err := file.New(cfg.StoragePath + "/fileStorage.txt")
+	storage, err := file.New(cfg.StoragePath + "fileStorage.txt")
 
 	if err != nil {
 		log.Printf("Failed to create storage:+%v\n", err)
 	}
-	defer storage.Close()
 
 	repository := repository.New(storage)
 	handler := handlers.New(&repository, cfg.BaseURL)

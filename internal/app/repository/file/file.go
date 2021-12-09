@@ -7,40 +7,47 @@ import (
 )
 
 type FileStorage struct {
-	file    *os.File
-	scanner *bufio.Scanner
+	filePath string
 }
 
 func New(filePath string) (*FileStorage, error) {
-	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND|os.O_TRUNC, 0644)
+	defer file.Close()
+
 	if err != nil {
 		return nil, err
 	}
 
 	return &FileStorage{
-		file:    file,
-		scanner: bufio.NewScanner(file)}, nil
+		filePath: filePath}, nil
 }
 
 func (s *FileStorage) GetAll() (map[string]string, error) {
-	result := make(map[string]string)
+	storage := make(map[string]string)
+	file, err := os.Open(s.filePath)
+	defer file.Close()
 
-	if !s.scanner.Scan() {
-		return nil, s.scanner.Err()
+	if err != nil {
+		return nil, err
 	}
 
-	for s.scanner.Scan() {
-		record := strings.Split(s.scanner.Text(), ";")
-		result[record[0]] = record[1]
+	scanner := bufio.NewScanner(file)
+
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
+		record := strings.Split(scanner.Text(), ";")
+		storage[record[0]] = record[1]
 	}
 
-	return result, nil
+	return storage, nil
 }
 
 func (s *FileStorage) Add(shortURL string, originURL string) (int, error) {
-	return s.file.Write([]byte(shortURL + ";" + originURL))
-}
+	file, err := os.OpenFile(s.filePath, os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return 0, err
+	}
+	defer file.Close()
 
-func (s *FileStorage) Close() error {
-	return s.file.Close()
+	return file.Write([]byte(shortURL + ";" + originURL + "\n"))
 }
