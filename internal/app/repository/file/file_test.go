@@ -57,7 +57,8 @@ func TestGetAll(t *testing.T) {
 			require.NoError(t, err)
 
 			expected := getExpected(tt.text)
-			assert.Equal(t, info, expected, "файл должен быть заполнен тем, что в него положили")
+			assert.Equal(t, info, expected, "file should have expected content")
+			require.NoError(t, os.Remove(fileName))
 		})
 	}
 }
