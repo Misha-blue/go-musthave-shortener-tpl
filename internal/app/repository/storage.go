@@ -1,6 +1,6 @@
 package repository
 
-type Storage interface {
+type Storager interface {
 	GetAll() (map[string]string, error)
 	Add(shortURL string) (string, error)
 }
