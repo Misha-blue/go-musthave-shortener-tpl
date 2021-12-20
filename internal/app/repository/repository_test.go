@@ -12,34 +12,23 @@ import (
 var fileName = "test.file"
 
 func TestGetAll(t *testing.T) {
-	type want struct {
-		err   string
-		value string
-	}
-
 	tests := []struct {
 		name string
 		text string
 		item string
-		want want
+		want string
 	}{
 		{
 			name: "file with 2 elements without new line",
 			text: "item1;1\nitem2;2",
 			item: "item1",
-			want: want{
-				value: "1",
-				err:   "",
-			},
+			want: "1",
 		},
 		{
 			name: "file with 5 elements with new line",
 			text: "item1;1\nitem2;2\nitem3;3\nitem4;4\nitem5;5\n",
 			item: "item2",
-			want: want{
-				value: "2",
-				err:   "",
-			},
+			want: "2",
 		},
 	}
 
@@ -52,7 +41,7 @@ func TestGetAll(t *testing.T) {
 			actual, err := repo.Load(tt.item)
 			require.NoError(t, err)
 
-			assert.Equal(t, tt.want.value, actual, "file should have expected content")
+			assert.Equal(t, tt.want, actual, "file should have expected content")
 			require.NoError(t, os.Remove(fileName))
 		})
 	}
