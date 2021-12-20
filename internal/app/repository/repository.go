@@ -1,14 +1,15 @@
 package repository
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
-
-	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/repository/file"
+	"os"
+	"strings"
 )
 
 type Repository struct {
-	storage *file.FileStorage
+	filePath string
 }
 
 type Repositorer interface {
@@ -16,14 +17,21 @@ type Repositorer interface {
 	Load(shortURL string) (string, error)
 }
 
-func New(storage *file.FileStorage) Repository {
-	return Repository{storage: storage}
+func New(filePath string) (*Repository, error) {
+	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return nil, err
+	}
+
+	defer file.Close()
+
+	return &Repository{filePath: filePath}, nil
 }
 
 func (repo Repository) Store(url string) (string, error) {
 	err := error(nil)
 
-	urls, e := repo.storage.GetAll()
+	urls, e := getAll(repo.filePath)
 	if e != nil {
 		return "", e
 	}
@@ -32,7 +40,7 @@ func (repo Repository) Store(url string) (string, error) {
 
 	if shortURL == "" {
 		shortURL = generateShortURL(urls)
-		_, err = repo.storage.Add(shortURL, url)
+		_, err = add(repo.filePath, shortURL, url)
 	}
 
 	return shortURL, err
@@ -41,7 +49,7 @@ func (repo Repository) Store(url string) (string, error) {
 func (repo Repository) Load(shortURL string) (string, error) {
 	err := error(nil)
 
-	urls, e := repo.storage.GetAll()
+	urls, e := getAll(repo.filePath)
 	if e != nil {
 		return "", e
 	}
@@ -66,4 +74,35 @@ func findShortURL(s map[string]string, url string) string {
 
 func generateShortURL(s map[string]string) string {
 	return fmt.Sprintf("%d", len(s))
+}
+
+func getAll(filePath string) (map[string]string, error) {
+	storage := make(map[string]string)
+	file, err := os.Open(filePath)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
+		record := strings.Split(scanner.Text(), ";")
+		storage[record[0]] = record[1]
+	}
+
+	return storage, nil
+}
+
+func add(filePath string, shortURL string, originURL string) (int, error) {
+	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return 0, err
+	}
+	defer file.Close()
+
+	return file.Write([]byte(shortURL + ";" + originURL + "\n"))
 }

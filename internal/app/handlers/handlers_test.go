@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/repository"
-	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/repository/file"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
@@ -48,7 +47,8 @@ func TestHandleURLPostRequest(t *testing.T) {
 			},
 		},
 	}
-	r := NewRouter()
+	r, err := NewRouter()
+	require.NoError(t, err)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -106,7 +106,8 @@ func TestHandleURLJsonPostRequest(t *testing.T) {
 			},
 		},
 	}
-	r := NewRouter()
+	r, err := NewRouter()
+	require.NoError(t, err)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -152,7 +153,8 @@ func TestHandleURLWrongJsonPostRequest(t *testing.T) {
 			},
 		},
 	}
-	r := NewRouter()
+	r, err := NewRouter()
+	require.NoError(t, err)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -201,7 +203,8 @@ func TestHandleURLGetRequest(t *testing.T) {
 			},
 		},
 	}
-	r := NewRouter()
+	r, err := NewRouter()
+	require.NoError(t, err)
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
@@ -260,7 +263,8 @@ func TestHandleURLOtherMethodsRequest(t *testing.T) {
 			method: http.MethodConnect,
 		},
 	}
-	r := NewRouter()
+	r, err := NewRouter()
+	require.NoError(t, err)
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
@@ -296,16 +300,19 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 	return resp, string(respBody)
 }
 
-func NewRouter() chi.Router {
+func NewRouter() (chi.Router, error) {
 	fmt.Print("test")
 	r := chi.NewRouter()
 
-	storage, _ := file.New("fileStorage.txt")
-	repository := repository.New(storage)
-	handler := New(&repository, "http://localhost:8080")
+	repository, err := repository.New("fileStorage.txt")
+	if err != nil {
+		return nil, err
+	}
+
+	handler := New(repository, "http://localhost:8080")
 
 	r.Get("/{shortURL}", handler.HandleURLGetRequest)
 	r.Post("/", handler.HandleURLPostRequest)
 	r.Post("/api/shorten", handler.HandleURLJsonPostRequest)
-	return r
+	return r, nil
 }

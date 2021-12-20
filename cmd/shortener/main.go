@@ -11,23 +11,20 @@ import (
 	"github.com/Misha-blue/go-musthave-shortener-tpl/cmd/shortener/settings"
 	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/handlers"
 	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/repository"
-	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/repository/file"
 )
 
 func main() {
 	cfg, err := settings.SetupConfig()
 	if err != nil {
-		log.Printf("Failed to read environment settings:+%v\n", err)
+		log.Fatalf("Failed to read environment settings:+%v\n", err)
 	}
 
-	storage, err := file.New(cfg.StoragePath)
-
+	repository, err := repository.New(cfg.StoragePath)
 	if err != nil {
-		log.Printf("Failed to create storage:+%v\n", err)
+		log.Fatalf("Failed to create storage:+%v\n", err)
 	}
 
-	repository := repository.New(storage)
-	handler := handlers.New(&repository, cfg.BaseURL)
+	handler := handlers.New(repository, cfg.BaseURL)
 	server := server.New(handler, cfg.ServerAdress)
 
 	ctx, cancel := context.WithCancel(context.Background())
