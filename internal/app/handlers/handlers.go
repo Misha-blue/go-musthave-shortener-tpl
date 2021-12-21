@@ -81,6 +81,7 @@ func (handler *Handler) HandleURLGetRequest(w http.ResponseWriter, r *http.Reque
 
 	if err == nil {
 		w.Header().Add("Content-Type", "application/json")
+		w.Header().Set("Content-Encoding", "gzip")
 		w.Header().Set("Location", url)
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	} else {
