@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -46,7 +47,8 @@ func TestHandleURLPostRequest(t *testing.T) {
 			},
 		},
 	}
-	r := NewRouter()
+	r, err := NewRouter()
+	require.NoError(t, err)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -63,6 +65,107 @@ func TestHandleURLPostRequest(t *testing.T) {
 			assert.Equal(t, tt.want.statusCode, resp.StatusCode)
 			assert.Equal(t, tt.want.contentType, resp.Header.Get("Content-Type"))
 			assert.Equal(t, tt.want.shortenedURL, body)
+		})
+	}
+}
+
+func TestHandleURLJsonPostRequest(t *testing.T) {
+	type Request struct {
+		URL string `json:"url"`
+	}
+	type Response struct {
+		Result string `json:"result"`
+	}
+
+	type want struct {
+		contentType string
+		statusCode  int
+		response    Response
+	}
+	tests := []struct {
+		name    string
+		request Request
+		want    want
+	}{
+		{
+			name:    "add new Url",
+			request: Request{"newUrl"},
+			want: want{
+				contentType: "application/json",
+				statusCode:  http.StatusCreated,
+				response:    Response{"http://localhost:8080/1"},
+			},
+		},
+		{
+			name:    "add existing Url",
+			request: Request{"existingUrl"},
+			want: want{
+				contentType: "application/json",
+				statusCode:  http.StatusCreated,
+				response:    Response{"http://localhost:8080/0"},
+			},
+		},
+	}
+	r, err := NewRouter()
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	existingURL, _ := json.Marshal(Request{"existingUrl"})
+	postResp, _ := testRequest(t, ts, http.MethodPost, "/api/shorten", bytes.NewReader(existingURL))
+	assert.Equal(t, http.StatusCreated, postResp.StatusCode)
+	defer postResp.Body.Close()
+	var response Response
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testURL, _ := json.Marshal(tt.request)
+			resp, body := testRequest(t, ts, http.MethodPost, "/api/shorten", bytes.NewReader(testURL))
+			defer resp.Body.Close()
+			assert.Equal(t, tt.want.statusCode, resp.StatusCode)
+			assert.Equal(t, tt.want.contentType, resp.Header.Get("Content-Type"))
+
+			_ = json.Unmarshal([]byte(body), &response)
+			assert.Equal(t, tt.want.response, response)
+		})
+	}
+}
+
+func TestHandleURLWrongJsonPostRequest(t *testing.T) {
+	type want struct {
+		contentType string
+		statusCode  int
+		response    string
+	}
+	tests := []struct {
+		name    string
+		request string
+		want    want
+	}{
+		{
+			name:    "add wrong json Url",
+			request: "newUrl",
+			want: want{
+				contentType: "text/plain; charset=utf-8",
+				statusCode:  http.StatusBadRequest,
+				response:    "invalid character 'e' in literal null (expecting 'u')\n",
+			},
+		},
+	}
+	r, err := NewRouter()
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resp, body := testRequest(t, ts, http.MethodPost, "/api/shorten", bytes.NewReader([]byte(tt.request)))
+			defer resp.Body.Close()
+			assert.Equal(t, tt.want.statusCode, resp.StatusCode)
+			assert.Equal(t, tt.want.contentType, resp.Header.Get("Content-Type"))
+			assert.Equal(t, tt.want.response, body)
 		})
 	}
 }
@@ -100,7 +203,8 @@ func TestHandleURLGetRequest(t *testing.T) {
 			},
 		},
 	}
-	r := NewRouter()
+	r, err := NewRouter()
+	require.NoError(t, err)
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
@@ -159,7 +263,8 @@ func TestHandleURLOtherMethodsRequest(t *testing.T) {
 			method: http.MethodConnect,
 		},
 	}
-	r := NewRouter()
+	r, err := NewRouter()
+	require.NoError(t, err)
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
@@ -195,14 +300,19 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 	return resp, string(respBody)
 }
 
-func NewRouter() chi.Router {
+func NewRouter() (chi.Router, error) {
 	fmt.Print("test")
 	r := chi.NewRouter()
 
-	repository := repository.New()
-	handler := New(&repository)
+	repository, err := repository.New("fileStorage.txt")
+	if err != nil {
+		return nil, err
+	}
+
+	handler := New(repository, "http://localhost:8080")
 
 	r.Get("/{shortURL}", handler.HandleURLGetRequest)
 	r.Post("/", handler.HandleURLPostRequest)
-	return r
+	r.Post("/api/shorten", handler.HandleURLJsonPostRequest)
+	return r, nil
 }

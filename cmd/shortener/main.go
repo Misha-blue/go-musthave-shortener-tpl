@@ -8,14 +8,24 @@ import (
 	"syscall"
 
 	"github.com/Misha-blue/go-musthave-shortener-tpl/cmd/shortener/server"
+	"github.com/Misha-blue/go-musthave-shortener-tpl/cmd/shortener/settings"
 	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/handlers"
 	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/repository"
 )
 
 func main() {
-	repository := repository.New()
-	handler := handlers.New(&repository)
-	server := server.New(handler)
+	cfg, err := settings.SetupConfig()
+	if err != nil {
+		log.Fatalf("Failed to read environment settings:+%v\n", err)
+	}
+
+	repository, err := repository.New(cfg.StoragePath)
+	if err != nil {
+		log.Fatalf("Failed to create storage:+%v\n", err)
+	}
+
+	handler := handlers.New(repository, cfg.BaseURL)
+	server := server.New(handler, cfg.ServerAdress)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
