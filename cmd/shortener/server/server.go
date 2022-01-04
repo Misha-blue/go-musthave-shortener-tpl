@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/handlers"
+	"github.com/Misha-blue/go-musthave-shortener-tpl/internal/app/handlers/middlewares"
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
 )
 
 type Server struct {
@@ -28,14 +28,13 @@ func (s *Server) Run(ctx context.Context) (err error) {
 
 	router := chi.NewRouter()
 
-	router.Use(middleware.Compress(5))
 	router.Get("/{shortURL}", s.handler.HandleURLGetRequest)
 	router.Post("/", s.handler.HandleURLPostRequest)
 	router.Post("/api/shorten", s.handler.HandleURLJsonPostRequest)
 
 	server := http.Server{
 		Addr:    s.serverAddress,
-		Handler: router,
+		Handler: middlewares.GzipHandle(router),
 	}
 
 	go func() {
