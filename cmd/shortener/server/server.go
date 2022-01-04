@@ -28,13 +28,14 @@ func (s *Server) Run(ctx context.Context) (err error) {
 
 	router := chi.NewRouter()
 
+	router.Use(middlewares.GzipHandle)
 	router.Get("/{shortURL}", s.handler.HandleURLGetRequest)
 	router.Post("/", s.handler.HandleURLPostRequest)
 	router.Post("/api/shorten", s.handler.HandleURLJsonPostRequest)
 
 	server := http.Server{
 		Addr:    s.serverAddress,
-		Handler: middlewares.GzipHandle(router),
+		Handler: router,
 	}
 
 	go func() {
